@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: verifipay-backend
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/verifipay_db
+    username: postgres
+    password: admin
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    validate-migration-naming: true
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:verifipay-local-secret-key-2026-change-in-production}
+    expiration-minutes: 30
+
+server:
+  port: 8080

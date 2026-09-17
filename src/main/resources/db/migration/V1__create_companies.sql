@@ -1,0 +1,11 @@
+CREATE TABLE companies (
+    id BIGSERIAL PRIMARY KEY,
+
+    name VARCHAR(150) NOT NULL,
+    ruc VARCHAR(11),
+
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP
+);
