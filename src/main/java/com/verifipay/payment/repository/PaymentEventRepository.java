@@ -22,4 +22,19 @@ public interface PaymentEventRepository
             BigDecimal amount,
             LocalDateTime occurredAfter
     );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    List<PaymentEvent>
+    findAllByCompanyIdAndBranchIdAndMethodAndAmountAndSecurityCodeAndConsumedFalseAndOccurredAtAfterOrderByOccurredAtDesc(
+            Long companyId,
+            Long branchId,
+            PaymentMethod method,
+            BigDecimal amount,
+            String securityCode,
+            LocalDateTime occurredAfter
+    );
+
+    boolean existsBySourceEventId(
+            String sourceEventId
+    );
 }

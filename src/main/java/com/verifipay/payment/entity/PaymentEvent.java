@@ -52,6 +52,9 @@ public class PaymentEvent {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "source_event_id", length = 150, unique = true)
+    private String sourceEventId;
+
     @PrePersist
     public void prePersist() {
 

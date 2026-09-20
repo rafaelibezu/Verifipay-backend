@@ -36,27 +36,52 @@ public class YapeVerificationProvider
 
         LocalDateTime from =
                 LocalDateTime.now()
-                        .minusMinutes(SEARCH_WINDOW_MINUTES);
-
-        List<PaymentEvent> candidates =
-                paymentEventRepository
-                        .findAllByCompanyIdAndBranchIdAndMethodAndAmountAndConsumedFalseAndOccurredAtAfterOrderByOccurredAtDesc(
-                                cashier.getCompany().getId(),
-                                cashier.getBranch().getId(),
-                                PaymentMethod.YAPE,
-                                request.amount(),
-                                from
+                        .minusMinutes(
+                                SEARCH_WINDOW_MINUTES
                         );
 
-        if (request.securityCode() != null &&
-                !request.securityCode().isBlank()) {
+        List<PaymentEvent> candidates;
 
-            candidates = candidates.stream()
-                    .filter(event ->
-                            request.securityCode()
-                                    .equals(event.getSecurityCode())
-                    )
-                    .toList();
+        String securityCode =
+                normalizeSecurityCode(
+                        request.securityCode()
+                );
+
+        /*
+         * Si tenemos código de seguridad,
+         * PostgreSQL busca directamente
+         * monto + código.
+         */
+        if (securityCode != null) {
+
+            candidates =
+                    paymentEventRepository
+                            .findAllByCompanyIdAndBranchIdAndMethodAndAmountAndSecurityCodeAndConsumedFalseAndOccurredAtAfterOrderByOccurredAtDesc(
+                                    cashier.getCompany().getId(),
+                                    cashier.getBranch().getId(),
+                                    PaymentMethod.YAPE,
+                                    request.amount(),
+                                    securityCode,
+                                    from
+                            );
+
+        } else {
+
+            /*
+             * Sin código buscamos por monto.
+             *
+             * Si existen varios pagos iguales,
+             * el resultado será AMBIGUOUS.
+             */
+            candidates =
+                    paymentEventRepository
+                            .findAllByCompanyIdAndBranchIdAndMethodAndAmountAndConsumedFalseAndOccurredAtAfterOrderByOccurredAtDesc(
+                                    cashier.getCompany().getId(),
+                                    cashier.getBranch().getId(),
+                                    PaymentMethod.YAPE,
+                                    request.amount(),
+                                    from
+                            );
         }
 
         if (candidates.isEmpty()) {
@@ -79,5 +104,21 @@ public class YapeVerificationProvider
                 VerificationStatus.DETECTED,
                 candidates.getFirst()
         );
+    }
+
+    private String normalizeSecurityCode(
+            String securityCode
+    ) {
+
+        if (securityCode == null) {
+            return null;
+        }
+
+        String normalized =
+                securityCode.trim();
+
+        return normalized.isEmpty()
+                ? null
+                : normalized;
     }
 }
