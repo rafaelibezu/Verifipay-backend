@@ -21,5 +21,8 @@ security:
     secret: ${JWT_SECRET:verifipay-local-secret-key-2026-change-in-production}
     expiration-minutes: 30
 
+payment-request:
+  expiration-minutes: ${PAYMENT_REQUEST_EXPIRATION_MINUTES:5}
+
 server:
   port: 8080

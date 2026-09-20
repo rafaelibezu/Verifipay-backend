@@ -101,6 +101,9 @@ public class SecurityConfig {
                                 "/api/v1/admin/**"
                         ).hasRole("ADMIN")
 
+                        .requestMatchers("/api/v1/payment-requests", "/api/v1/payment-requests/**")
+                        .hasRole("CASHIER")
+
                         .anyRequest()
                         .authenticated()
                 )

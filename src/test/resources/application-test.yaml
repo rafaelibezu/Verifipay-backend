@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: ${VERIFIPAY_TEST_DATABASE_URL:jdbc:postgresql://127.0.0.1:55439/verifipay_paymentrequest_test}
+    username: verifipay_test
+    password: ''
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+security:
+  jwt:
+    secret: verifipay-test-only-key-not-for-production-0123456789
+payment-request:
+  expiration-minutes: 5
