@@ -4,6 +4,7 @@ import com.verifipay.common.api.PageResponse;
 import com.verifipay.common.enums.PaymentRequestStatus;
 import com.verifipay.common.enums.UserRole;
 import com.verifipay.common.exception.ResourceNotFoundException;
+import com.verifipay.company.repository.CompanyRepository;
 import com.verifipay.paymentrequest.dto.CreatePaymentRequestRequest;
 import com.verifipay.paymentrequest.dto.PaymentRequestResponse;
 import com.verifipay.paymentrequest.repository.PaymentRequestRepository;
@@ -30,22 +31,26 @@ import java.time.Instant;
 public class PaymentRequestService {
     private final PaymentRequestRepository repository;
     private final CurrentUserService currentUserService;
+    private final CompanyRepository companyRepository;
     private final Duration expiration;
     private final Clock clock;
 
     @Autowired
     public PaymentRequestService(PaymentRequestRepository repository, CurrentUserService currentUserService,
+            CompanyRepository companyRepository,
             @Value("${payment-request.expiration-minutes:5}") long expirationMinutes) {
-        this(repository, currentUserService, expirationMinutes, Clock.systemUTC());
+        this(repository, currentUserService, companyRepository, expirationMinutes, Clock.systemUTC());
     }
 
     PaymentRequestService(PaymentRequestRepository repository, CurrentUserService currentUserService,
+            CompanyRepository companyRepository,
             long expirationMinutes, Clock clock) {
         if (expirationMinutes <= 0) {
             throw new IllegalArgumentException("payment-request.expiration-minutes debe ser positivo");
         }
         this.repository = repository;
         this.currentUserService = currentUserService;
+        this.companyRepository = companyRepository;
         this.expiration = Duration.ofMinutes(expirationMinutes);
         this.clock = clock;
     }
@@ -55,6 +60,7 @@ public class PaymentRequestService {
     @Transactional
     public CreationResult create(@Valid CreatePaymentRequestRequest input) {
         User cashier = requireActiveCashier();
+        lockCompany(cashier);
         Instant now = clock.instant();
         int inserted = repository.insertIfAbsent(cashier.getCompany().getId(),
                 cashier.getBranch() == null ? null : cashier.getBranch().getId(), cashier.getId(),
@@ -96,13 +102,22 @@ public class PaymentRequestService {
     @Transactional
     public PaymentRequestResponse cancel(Long id) {
         User cashier = requireActiveCashier();
+        lockCompany(cashier);
         var request = repository.findOwnedForUpdate(id, cashier.getId(), cashier.getCompany().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Cobro no encontrado"));
         if (request.getStatus() != PaymentRequestStatus.WAITING) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Solo se puede cancelar un cobro WAITING");
         }
-        request.cancel();
+        request.cancel(clock.instant());
         return PaymentRequestResponse.from(request);
+    }
+
+    private void lockCompany(User cashier) {
+        var company = companyRepository.findForUpdate(cashier.getCompany().getId())
+                .orElseThrow(() -> new AccessDeniedException("Negocio no disponible"));
+        if (!Boolean.TRUE.equals(company.getActive())) {
+            throw new AccessDeniedException("Se requiere un negocio activo");
+        }
     }
 
     private User requireActiveCashier() {

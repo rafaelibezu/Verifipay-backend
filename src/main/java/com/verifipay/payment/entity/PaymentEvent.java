@@ -2,12 +2,15 @@ package com.verifipay.payment.entity;
 
 import com.verifipay.branch.entity.Branch;
 import com.verifipay.common.enums.PaymentMethod;
+import com.verifipay.common.enums.PaymentEventStatus;
+import com.verifipay.paymentrequest.entity.PaymentRequest;
 import com.verifipay.company.entity.Company;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "payment_events")
@@ -54,6 +57,37 @@ public class PaymentEvent {
 
     @Column(name = "source_event_id", length = 150, unique = true)
     private String sourceEventId;
+
+    // NULL identifies legacy events; they never enter automatic matching.
+    @Enumerated(EnumType.STRING)
+    @Column(name = "matching_status", length = 30)
+    @Setter(AccessLevel.NONE)
+    private PaymentEventStatus matchingStatus;
+
+    @Column(name = "occurred_at_instant")
+    private Instant occurredAtInstant;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payment_request_id", unique = true)
+    @Setter(AccessLevel.NONE)
+    private PaymentRequest paymentRequest;
+
+    public void match(PaymentRequest request) {
+        requireUnmatched();
+        paymentRequest = request;
+        matchingStatus = PaymentEventStatus.MATCHED;
+    }
+
+    public void markAmbiguous() {
+        requireUnmatched();
+        matchingStatus = PaymentEventStatus.AMBIGUOUS;
+    }
+
+    private void requireUnmatched() {
+        if (matchingStatus != PaymentEventStatus.UNMATCHED || paymentRequest != null) {
+            throw new IllegalStateException("El evento no admite matching");
+        }
+    }
 
     @PrePersist
     public void prePersist() {

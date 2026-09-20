@@ -56,7 +56,7 @@ public class YapeVerificationProvider
 
             candidates =
                     paymentEventRepository
-                            .findAllByCompanyIdAndBranchIdAndMethodAndAmountAndSecurityCodeAndConsumedFalseAndOccurredAtAfterOrderByOccurredAtDesc(
+                            .findAllByCompanyIdAndBranchIdAndMethodAndAmountAndSecurityCodeAndMatchingStatusIsNullAndConsumedFalseAndOccurredAtAfterOrderByOccurredAtDesc(
                                     cashier.getCompany().getId(),
                                     cashier.getBranch().getId(),
                                     PaymentMethod.YAPE,
@@ -75,7 +75,7 @@ public class YapeVerificationProvider
              */
             candidates =
                     paymentEventRepository
-                            .findAllByCompanyIdAndBranchIdAndMethodAndAmountAndConsumedFalseAndOccurredAtAfterOrderByOccurredAtDesc(
+                            .findAllByCompanyIdAndBranchIdAndMethodAndAmountAndMatchingStatusIsNullAndConsumedFalseAndOccurredAtAfterOrderByOccurredAtDesc(
                                     cashier.getCompany().getId(),
                                     cashier.getBranch().getId(),
                                     PaymentMethod.YAPE,

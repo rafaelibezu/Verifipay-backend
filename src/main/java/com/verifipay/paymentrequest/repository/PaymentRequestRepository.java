@@ -10,8 +10,22 @@ import org.springframework.data.repository.query.Param;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.List;
 
 public interface PaymentRequestRepository extends JpaRepository<PaymentRequest, Long> {
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select p from PaymentRequest p
+            where p.company.id = :companyId and p.amount = :amount
+              and p.createdAt <= :occurredAt and :occurredAt < p.expiresAt
+              and (p.status = com.verifipay.common.enums.PaymentRequestStatus.WAITING
+                   or (p.status = com.verifipay.common.enums.PaymentRequestStatus.CANCELLED
+                       and p.cancelledAt is not null and :occurredAt < p.cancelledAt))
+            order by p.id
+            """)
+    List<PaymentRequest> findCandidatesForUpdate(@Param("companyId") Long companyId,
+            @Param("amount") BigDecimal amount, @Param("occurredAt") Instant occurredAt);
+
     Optional<PaymentRequest> findByCashierIdAndClientRequestId(Long cashierId, String clientRequestId);
 
     Page<PaymentRequest> findAllByCashierIdAndCompanyId(Long cashierId, Long companyId, Pageable pageable);

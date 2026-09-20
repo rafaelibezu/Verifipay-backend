@@ -3,6 +3,7 @@ package com.verifipay.verification.service;
 import com.verifipay.common.enums.VerificationStatus;
 import com.verifipay.common.exception.BusinessException;
 import com.verifipay.common.exception.ResourceNotFoundException;
+import com.verifipay.company.repository.CompanyRepository;
 import com.verifipay.payment.entity.PaymentEvent;
 import com.verifipay.payment.repository.PaymentEventRepository;
 import com.verifipay.security.CurrentUserService;
@@ -34,6 +35,7 @@ public class VerificationService {
     private final CurrentUserService currentUserService;
     private final AuditService auditService;
     private final VerificationMapper verificationMapper;
+    private final CompanyRepository companyRepository;
 
     @Transactional
     public VerificationResponse verify(
@@ -48,6 +50,10 @@ public class VerificationService {
                     "El usuario no tiene un local asignado"
             );
         }
+
+        // Keep Company -> event ordering even when a legacy delivery is retried concurrently.
+        companyRepository.findForUpdate(cashier.getCompany().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa no encontrada"));
 
         PaymentVerificationProvider provider =
                 providerResolver.resolve(request.method());

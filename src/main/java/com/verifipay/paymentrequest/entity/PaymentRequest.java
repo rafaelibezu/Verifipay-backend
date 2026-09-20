@@ -52,10 +52,38 @@ public class PaymentRequest {
     @Column(name = "paid_at")
     private Instant paidAt;
 
-    public void cancel() {
+    @Column(name = "cancelled_at")
+    private Instant cancelledAt;
+
+    public void cancel(Instant now) {
         if (status != PaymentRequestStatus.WAITING) {
             throw new IllegalStateException("Solo se puede cancelar un cobro WAITING");
         }
         status = PaymentRequestStatus.CANCELLED;
+        cancelledAt = java.util.Objects.requireNonNull(now);
+    }
+
+    public boolean isEligibleAt(Instant occurredAt) {
+        boolean eligibleStatus = status == PaymentRequestStatus.WAITING
+                || (status == PaymentRequestStatus.CANCELLED && cancelledAt != null
+                    && occurredAt.isBefore(cancelledAt));
+        return eligibleStatus && !occurredAt.isBefore(createdAt) && occurredAt.isBefore(expiresAt);
+    }
+
+    public void markPaid(Instant occurredAt, Instant now) {
+        requireEligibleAt(occurredAt);
+        status = PaymentRequestStatus.PAID;
+        paidAt = java.util.Objects.requireNonNull(now);
+    }
+
+    public void markAmbiguous(Instant occurredAt) {
+        requireEligibleAt(occurredAt);
+        status = PaymentRequestStatus.AMBIGUOUS;
+    }
+
+    private void requireEligibleAt(Instant occurredAt) {
+        if (!isEligibleAt(occurredAt)) {
+            throw new IllegalStateException("El cobro no es elegible para este evento");
+        }
     }
 }
