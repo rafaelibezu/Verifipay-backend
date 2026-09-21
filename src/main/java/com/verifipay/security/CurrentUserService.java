@@ -3,6 +3,8 @@ package com.verifipay.security;
 import com.verifipay.common.exception.ResourceNotFoundException;
 import com.verifipay.user.entity.User;
 import com.verifipay.user.repository.UserRepository;
+import com.verifipay.common.enums.UserRole;
+import org.springframework.security.access.AccessDeniedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -32,11 +34,19 @@ public class CurrentUserService {
                         .getClaim("userId");
 
         return userRepository
-                .findById(userId)
+                .findByIdWithTenantContext(userId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "Usuario autenticado no encontrado"
                         )
                 );
+    }
+
+    public User requireRole(UserRole role) {
+        User user = getCurrentUser();
+        if (user.getRole() != role || !Boolean.TRUE.equals(user.getActive())) {
+            throw new AccessDeniedException("No tienes permisos para realizar esta operacion");
+        }
+        return user;
     }
 }

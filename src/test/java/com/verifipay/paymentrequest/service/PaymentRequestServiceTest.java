@@ -28,6 +28,7 @@ class PaymentRequestServiceTest {
         when(companies.findForUpdate(1L)).thenReturn(Optional.of(company));
         var cashier = User.builder().id(2L).company(company).role(UserRole.CASHIER).active(true).build();
         when(currentUser.getCurrentUser()).thenReturn(cashier);
+        when(currentUser.requireRole(UserRole.CASHIER)).thenReturn(cashier);
         when(repository.findByCashierIdAndClientRequestId(2L, "retry")).thenReturn(Optional.empty());
         var now = Instant.parse("2026-09-20T23:59:59Z");
         var service = new PaymentRequestService(repository, currentUser, companies, 7, Clock.fixed(now, ZoneOffset.UTC));

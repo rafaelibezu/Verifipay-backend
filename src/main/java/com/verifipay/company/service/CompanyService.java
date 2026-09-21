@@ -7,6 +7,8 @@ import com.verifipay.company.dto.CreateCompanyRequest;
 import com.verifipay.company.entity.Company;
 import com.verifipay.company.mapper.CompanyMapper;
 import com.verifipay.company.repository.CompanyRepository;
+import com.verifipay.security.CurrentUserService;
+import com.verifipay.common.enums.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,9 +21,15 @@ public class CompanyService {
 
     private final CompanyRepository companyRepository;
     private final CompanyMapper companyMapper;
+    private final CurrentUserService currentUserService;
+
+    private void requirePlatformAdmin() {
+        currentUserService.requireRole(UserRole.PLATFORM_ADMIN);
+    }
 
     @Transactional
     public CompanyResponse create(CreateCompanyRequest request) {
+        requirePlatformAdmin();
 
         if (request.ruc() != null &&
                 companyRepository.existsByRuc(request.ruc())) {
@@ -42,6 +50,7 @@ public class CompanyService {
 
     @Transactional(readOnly = true)
     public CompanyResponse findById(Long id) {
+        requirePlatformAdmin();
 
         Company company = companyRepository
                 .findById(id)
@@ -56,6 +65,7 @@ public class CompanyService {
 
     @Transactional(readOnly = true)
     public List<CompanyResponse> findAll() {
+        requirePlatformAdmin();
 
         return companyRepository
                 .findAll()

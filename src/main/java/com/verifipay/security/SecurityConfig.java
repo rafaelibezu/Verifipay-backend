@@ -98,16 +98,18 @@ public class SecurityConfig {
                                 HttpMethod.POST,
                                 "/api/v1/device/payment-events/yape"
                         ).permitAll()
-                        .requestMatchers(
-                                "/api/v1/companies/**",
-                                "/api/v1/branches/**",
-                                "/api/v1/users/**",
-                                "/api/v1/payment-events/mock/**",
-                                "/api/v1/admin/**"
-                        ).hasRole("ADMIN")
+                        .requestMatchers("/api/v1/platform/**").hasRole("PLATFORM_ADMIN")
+
+                        .requestMatchers("/api/v1/owner/**").hasRole("OWNER")
 
                         .requestMatchers("/api/v1/payment-requests", "/api/v1/payment-requests/**")
                         .hasRole("CASHIER")
+
+                        .requestMatchers("/api/v1/verifications", "/api/v1/verifications/**")
+                        .hasRole("CASHIER")
+
+                        .requestMatchers("/api/v1/users", "/api/v1/users/**")
+                        .hasRole("PLATFORM_ADMIN")
 
                         .anyRequest()
                         .authenticated()

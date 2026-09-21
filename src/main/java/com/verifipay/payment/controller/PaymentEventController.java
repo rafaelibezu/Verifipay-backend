@@ -9,8 +9,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.context.annotation.Profile;
 
 @RestController
+@Profile({"local", "test"})
 @RequestMapping("/api/v1/payment-events")
 @RequiredArgsConstructor
 public class PaymentEventController {

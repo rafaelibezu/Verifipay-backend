@@ -7,6 +7,7 @@ import com.verifipay.audit.repository.AuditLogRepository;
 import com.verifipay.common.api.PageResponse;
 import com.verifipay.security.CurrentUserService;
 import com.verifipay.user.entity.User;
+import com.verifipay.common.enums.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -29,8 +30,7 @@ public class AdminAuditService {
             int size
     ) {
 
-        User admin =
-                currentUserService.getCurrentUser();
+        User admin = currentUserService.requireRole(UserRole.OWNER);
 
         Long companyId =
                 admin.getCompany().getId();

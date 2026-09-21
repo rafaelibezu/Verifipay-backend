@@ -14,7 +14,7 @@ import com.verifipay.branch.dto.UpdateBranchRequest;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/branches")
+@RequestMapping("/api/v1/owner/branches")
 @RequiredArgsConstructor
 public class BranchController {
 
@@ -47,14 +47,12 @@ public class BranchController {
         );
     }
 
-    @GetMapping("/company/{companyId}")
-    public ResponseEntity<ApiResponse<List<BranchResponse>>> findAllByCompany(
-            @PathVariable Long companyId
-    ) {
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<BranchResponse>>> findAll() {
 
         return ResponseEntity.ok(
                 ApiResponse.success(
-                        branchService.findAllByCompany(companyId)
+                        branchService.findAll()
                 )
         );
     }

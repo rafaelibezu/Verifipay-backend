@@ -121,7 +121,7 @@ public class PaymentRequestService {
     }
 
     private User requireActiveCashier() {
-        User user = currentUserService.getCurrentUser();
+        User user = currentUserService.requireRole(UserRole.CASHIER);
         if (user.getRole() != UserRole.CASHIER || !Boolean.TRUE.equals(user.getActive())
                 || user.getCompany() == null || !Boolean.TRUE.equals(user.getCompany().getActive())) {
             throw new AccessDeniedException("Se requiere un cajero y negocio activos");

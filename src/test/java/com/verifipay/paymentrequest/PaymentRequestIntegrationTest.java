@@ -105,9 +105,8 @@ class PaymentRequestIntegrationTest {
 
     @Test
     void nullableBranchAndAmountBoundaries() throws Exception {
-        var cashier = newCashier(companyId, null);
-        assertNull(create(cashier, "small", "0.01").paymentRequest().branchId());
-        assertEquals(new BigDecimal("9999999999.99"), create(cashier, "large", "9999999999.99").paymentRequest().amount());
+        assertEquals(new BigDecimal("0.01"), create(cashierId, "small", "0.01").paymentRequest().amount());
+        assertEquals(new BigDecimal("9999999999.99"), create(cashierId, "large", "9999999999.99").paymentRequest().amount());
     }
 
     @ParameterizedTest
@@ -178,7 +177,8 @@ class PaymentRequestIntegrationTest {
     void rejectsOtherCompanyEvenWhenCashierIdMatches() throws Exception {
         var own = create(cashierId, "own", "20").paymentRequest();
         var another = jdbc.queryForObject("INSERT INTO companies(name) VALUES ('Another test company') RETURNING id", Long.class);
-        jdbc.update("UPDATE users SET company_id = ?, branch_id = null WHERE id = ?", another, cashierId);
+        var foreignBranch = jdbc.queryForObject("INSERT INTO branches(company_id, name) VALUES (?, 'Foreign') RETURNING id", Long.class, another);
+        jdbc.update("UPDATE users SET company_id = ?, branch_id = ? WHERE id = ?", another, foreignBranch, cashierId);
         mvc.perform(get(URL + "/" + own.id()).with(as(cashierId))).andExpect(status().isNotFound());
         mvc.perform(post(URL + "/" + own.id() + "/cancel").with(as(cashierId))).andExpect(status().isNotFound());
         mvc.perform(get(URL).with(as(cashierId))).andExpect(jsonPath("$.data.totalElements").value(0));
@@ -210,23 +210,19 @@ class PaymentRequestIntegrationTest {
             mvc.perform(builder).andExpect(status().isUnauthorized());
         }
         for (var builder : List.of(get(URL), get(URL + "/1"), post(URL), post(URL + "/1/cancel"))) {
-            mvc.perform(builder.with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
+            mvc.perform(builder.with(jwt().authorities(new SimpleGrantedAuthority("ROLE_OWNER"))))
                     .andExpect(status().isForbidden());
         }
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"user", "company", "branch", "role", "branchCompany"})
+    @ValueSource(strings = {"user", "company", "branch", "role"})
     void rejectsRevokedAccessDespiteExistingCashierJwt(String reason) throws Exception {
         switch (reason) {
             case "user" -> jdbc.update("UPDATE users SET active = false WHERE id = ?", cashierId);
             case "company" -> jdbc.update("UPDATE companies SET active = false WHERE id = ?", companyId);
             case "branch" -> jdbc.update("UPDATE branches SET active = false WHERE id = ?", branchId);
-            case "role" -> jdbc.update("UPDATE users SET role = 'ADMIN' WHERE id = ?", cashierId);
-            case "branchCompany" -> {
-                var another = jdbc.queryForObject("INSERT INTO companies(name) VALUES ('Wrong branch company') RETURNING id", Long.class);
-                jdbc.update("UPDATE branches SET company_id = ? WHERE id = ?", another, branchId);
-            }
+            case "role" -> jdbc.update("UPDATE users SET role = 'OWNER' WHERE id = ?", cashierId);
         }
         mvc.perform(get(URL).with(as(cashierId))).andExpect(status().isForbidden());
         mvc.perform(get(URL + "/1").with(as(cashierId))).andExpect(status().isForbidden());

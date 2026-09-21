@@ -1,6 +1,7 @@
 package com.verifipay.common.enums;
 
 public enum UserRole {
-    ADMIN,
+    PLATFORM_ADMIN,
+    OWNER,
     CASHIER
 }

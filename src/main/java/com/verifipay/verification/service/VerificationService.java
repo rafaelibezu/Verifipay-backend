@@ -8,6 +8,7 @@ import com.verifipay.payment.entity.PaymentEvent;
 import com.verifipay.payment.repository.PaymentEventRepository;
 import com.verifipay.security.CurrentUserService;
 import com.verifipay.user.entity.User;
+import com.verifipay.common.enums.UserRole;
 import com.verifipay.verification.dto.CreateVerificationRequest;
 import com.verifipay.verification.dto.VerificationResponse;
 import com.verifipay.verification.entity.Verification;
@@ -42,8 +43,7 @@ public class VerificationService {
             CreateVerificationRequest request
     ) {
 
-        User cashier =
-                currentUserService.getCurrentUser();
+        User cashier = currentUserService.requireRole(UserRole.CASHIER);
 
         if (cashier.getBranch() == null) {
             throw new BusinessException(
@@ -126,8 +126,7 @@ public class VerificationService {
     @Transactional(readOnly = true)
     public List<VerificationResponse> findMyHistory() {
 
-        User cashier =
-                currentUserService.getCurrentUser();
+        User cashier = currentUserService.requireRole(UserRole.CASHIER);
 
         return verificationRepository
                 .findAllByCashierIdOrderByCreatedAtDesc(
@@ -143,8 +142,7 @@ public class VerificationService {
             Long verificationId
     ) {
 
-        User cashier =
-                currentUserService.getCurrentUser();
+        User cashier = currentUserService.requireRole(UserRole.CASHIER);
 
         Verification verification =
                 verificationRepository

@@ -53,7 +53,7 @@ class PaymentMatchingMigrationTest {
                 var beforeVerifications = jdbc.queryForList("SELECT * FROM verifications ORDER BY id");
                 var beforeRequests = jdbc.queryForList("SELECT id, status, created_at, expires_at, paid_at FROM payment_requests ORDER BY id");
                 var result = Flyway.configure().dataSource(dataSource).schemas(schema).defaultSchema(schema).load().migrate();
-                assertEquals(1, result.migrationsExecuted);
+                assertEquals(2, result.migrationsExecuted);
                 assertEquals(beforeEvents, jdbc.queryForList("SELECT id, company_id, branch_id, amount, occurred_at, created_at, consumed, source_event_id FROM payment_events ORDER BY id"));
                 assertEquals(beforeVerifications, jdbc.queryForList("SELECT * FROM verifications ORDER BY id"));
                 assertEquals(beforeRequests, jdbc.queryForList("SELECT id, status, created_at, expires_at, paid_at FROM payment_requests ORDER BY id"));

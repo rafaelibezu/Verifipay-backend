@@ -11,6 +11,7 @@ import com.verifipay.device.repository.ReceiverDeviceRepository;
 import com.verifipay.device.util.DeviceTokenUtil;
 import com.verifipay.security.CurrentUserService;
 import com.verifipay.user.entity.User;
+import com.verifipay.common.enums.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,8 +30,7 @@ public class ReceiverDeviceService {
             CreateReceiverDeviceRequest request
     ) {
 
-        User admin =
-                currentUserService.getCurrentUser();
+        User admin = currentUserService.requireRole(UserRole.OWNER);
 
         Branch branch =
                 branchRepository
@@ -41,7 +41,7 @@ public class ReceiverDeviceService {
                                 )
                         );
 
-        if (!branch.getCompany()
+        if (!Boolean.TRUE.equals(branch.getActive()) || !branch.getCompany()
                 .getId()
                 .equals(
                         admin.getCompany().getId()

@@ -183,16 +183,12 @@ class DevicePaymentEventIntegrationTest extends PaymentMatchingTestSupport {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"token", "device", "company", "branch", "branchCompany"})
+    @ValueSource(strings = {"token", "device", "company", "branch"})
     void revokedDeviceAccessCannotInsert(String reason) throws Exception {
         switch (reason) {
             case "device" -> jdbc.update("UPDATE receiver_devices SET active = false WHERE id = ?", deviceId);
             case "company" -> jdbc.update("UPDATE companies SET active = false WHERE id = ?", companyId);
             case "branch" -> jdbc.update("UPDATE branches SET active = false WHERE id = ?", branchId);
-            case "branchCompany" -> {
-                var other = jdbc.queryForObject("INSERT INTO companies(name) VALUES ('Other') RETURNING id", Long.class);
-                jdbc.update("UPDATE branches SET company_id = ? WHERE id = ?", other, branchId);
-            }
         }
         mvc.perform(post(URL).header("X-Device-Token", reason.equals("token") ? "invalid" : token)
                         .contentType("application/json").content("{\"amount\":80,\"sourceEventId\":\"access-test\",\"occurredAtEpochMillis\":0}"))

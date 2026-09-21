@@ -28,11 +28,11 @@ class ApiConfigIntegrationTest {
     @Test
     void groupsContainOnlyTheDocumentedActorPaths() throws Exception {
         assertPaths("public", "/auth/login");
-        assertPaths("admin", "/companies", "/companies/{id}",
-                "/branches", "/branches/{id}", "/branches/company/{companyId}", "/branches/{id}/status",
-                "/users", "/users/{id}", "/users/company/{companyId}", "/users/branch/{branchId}", "/users/{id}/status",
-                "/admin/dashboard", "/admin/audit-logs", "/admin/verifications", "/admin/receiver-devices",
-                "/payment-events/mock/yape", "/auth/me", "/verifications", "/verifications/{id}");
+        assertPaths("platform-admin", "/platform/companies", "/platform/companies/{id}", "/platform/companies/{companyId}/owner", "/auth/me");
+        assertPaths("owner", "/owner/company", "/owner/branches", "/owner/branches/{id}",
+                "/owner/branches/{id}/status", "/owner/cashiers", "/owner/cashiers/{id}",
+                "/owner/cashiers/{id}/status", "/owner/receiver-devices", "/owner/dashboard",
+                "/owner/audit-logs", "/owner/verifications", "/auth/me");
         assertPaths("cashier", "/payment-requests", "/payment-requests/{id}", "/payment-requests/{id}/cancel",
                 "/auth/me", "/verifications", "/verifications/{id}");
         assertPaths("receiver-device", "/device/payment-events/yape");
@@ -74,13 +74,13 @@ class ApiConfigIntegrationTest {
         mvc.perform(get("/swagger-ui/index.html")).andExpect(status().isOk());
         mvc.perform(get("/swagger-ui/swagger-ui-bundle.js")).andExpect(status().isOk());
         mvc.perform(get("/v3/api-docs/swagger-config")).andExpect(status().isOk())
-                .andExpect(jsonPath("$.urls[*].url", containsInAnyOrder("/v3/api-docs/public", "/v3/api-docs/admin",
-                        "/v3/api-docs/cashier", "/v3/api-docs/receiver-device", "/v3/api-docs/legacy-verification")));
+                .andExpect(jsonPath("$.urls[*].url", containsInAnyOrder("/v3/api-docs/public", "/v3/api-docs/platform-admin",
+                        "/v3/api-docs/owner", "/v3/api-docs/cashier", "/v3/api-docs/receiver-device", "/v3/api-docs/legacy-verification")));
     }
 
     @Test
     void documentationAccessDoesNotOpenBusinessEndpoints() throws Exception {
-        for (String path : new String[]{"/auth/me", "/companies", "/payment-requests", "/verifications", "/admin/dashboard"}) {
+        for (String path : new String[]{"/auth/me", "/platform/companies", "/owner/company", "/payment-requests", "/verifications"}) {
             mvc.perform(get("/api/v1" + path)).andExpect(status().isUnauthorized());
         }
     }

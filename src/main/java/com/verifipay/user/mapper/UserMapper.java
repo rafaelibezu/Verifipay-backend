@@ -40,8 +40,8 @@ public class UserMapper {
 
         return new UserResponse(
                 user.getId(),
-                user.getCompany().getId(),
-                user.getCompany().getName(),
+                user.getCompany() == null ? null : user.getCompany().getId(),
+                user.getCompany() == null ? null : user.getCompany().getName(),
                 branchId,
                 branchName,
                 user.getName(),

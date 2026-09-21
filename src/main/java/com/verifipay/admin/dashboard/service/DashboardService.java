@@ -33,7 +33,7 @@ public class DashboardService {
     @Transactional(readOnly = true)
     public DashboardResponse getDashboard() {
 
-        User admin = currentUserService.getCurrentUser();
+        User admin = currentUserService.requireRole(UserRole.OWNER);
 
         Long companyId = admin.getCompany().getId();
 

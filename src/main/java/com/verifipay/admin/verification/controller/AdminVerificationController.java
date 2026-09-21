@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/api/v1/admin/verifications")
+@RequestMapping("/api/v1/owner/verifications")
 @RequiredArgsConstructor
 public class AdminVerificationController {
 

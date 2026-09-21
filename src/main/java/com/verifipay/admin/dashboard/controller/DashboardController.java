@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/admin/dashboard")
+@RequestMapping("/api/v1/owner/dashboard")
 @RequiredArgsConstructor
 public class DashboardController {
 

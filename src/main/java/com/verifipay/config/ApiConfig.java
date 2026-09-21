@@ -39,13 +39,9 @@ public class ApiConfig {
     }
 
     @Bean
-    public GroupedOpenApi adminApi() {
-        return group("admin", "ADMIN", "Administracion de empresas, locales, usuarios, dispositivos, "
-                        + "dashboard y auditoria. Incluye el endpoint existente de pagos simulados, el perfil propio "
-                        + "y Verification legacy compartido con usuarios autenticados.",
-                "/api/v1/companies/**", "/api/v1/branches/**", "/api/v1/users/**",
-                "/api/v1/admin/**", "/api/v1/payment-events/mock/**",
-                "/api/v1/auth/me", "/api/v1/verifications/**");
+    public GroupedOpenApi platformApi() {
+        return group("platform-admin", "PLATFORM_ADMIN", "Administracion global de Companies.",
+                "/api/v1/platform/**", "/api/v1/auth/me");
     }
 
     @Bean
@@ -54,6 +50,12 @@ public class ApiConfig {
                         + "cajero y negocio activos. Incluye el perfil propio y Verification legacy.",
                 "/api/v1/payment-requests", "/api/v1/payment-requests/**",
                 "/api/v1/auth/me", "/api/v1/verifications/**");
+    }
+
+    @Bean
+    public GroupedOpenApi ownerApi() {
+        return group("owner", "OWNER", "Administracion aislada de la Company propia, cajeros, locales y receptores.",
+                "/api/v1/owner/**", "/api/v1/auth/me");
     }
 
     @Bean
@@ -66,8 +68,7 @@ public class ApiConfig {
     @Bean
     public GroupedOpenApi legacyVerificationApi() {
         return group("legacy-verification", "Legacy Verification", "Flujo legacy separado del matching de "
-                        + "PaymentRequest. SecurityConfig exige JWT, sin restriccion de rol adicional: ADMIN y CASHIER "
-                        + "pueden acceder. Crear una verificacion requiere un local asignado; el historial es propio. "
+                        + "PaymentRequest. Solo CASHIER puede acceder. Crear una verificacion requiere un local asignado; el historial es propio. "
                         + "Solo consume eventos legacy con matching_status NULL.",
                 "/api/v1/verifications/**");
     }

@@ -1,16 +1,15 @@
 # Guía para agentes — VerifiPay Backend
 
 ## Producto
-VerifiPay es una solución a medida para una sola distribuidora.
-No es inicialmente un SaaS multiempresa.
+VerifiPay es una plataforma SaaS multiempresa. Company es el tenant principal.
 
-Una sola aplicación Flutter tiene dos roles humanos:
-- OWNER: dueño del negocio. Su celular tiene Yape y VerifiPay,
-  que escucha las notificaciones reales de Yape.
+Los roles humanos son:
+- PLATFORM_ADMIN: administra globalmente la plataforma y no opera cobros.
+- OWNER: administra únicamente su Company.
 - CASHIER: crea cobros esperados y consulta su estado.
   No necesita acceso al Yape del dueño.
 
-Todos los pagos llegan a un único Yape central del OWNER.
+Cada Company recibe pagos en un único Yape central mediante su ReceiverDevice.
 El cliente no usa VerifiPay: yapea normalmente al dueño.
 
 ## Modelo y flujo objetivo
@@ -61,7 +60,8 @@ Flyway, Jakarta Validation, Lombok y JUnit.
 - No añadir dependencias sin justificar su necesidad y alternativas.
 
 ## Seguridad y consistencia
-- Obtener usuario y negocio desde la autenticación, no del body.
+- Obtener usuario y Company desde la autenticación, no del body.
+- PLATFORM_ADMIN no pertenece a una Company; OWNER y CASHIER operan solo su Company.
 - CASHIER solo opera sobre sus cobros; OWNER administra su negocio.
 - Comprobar permisos y estados activos en el backend.
 - Mantener autenticación por token del dispositivo; guardar su hash.
@@ -107,7 +107,7 @@ Flyway, Jakarta Validation, Lombok y JUnit.
 - No rehacer la arquitectura ni realizar refactors ajenos a la tarea.
 - No introducir Mercado Pago, POS, tarjetas, Plin, microservicios,
   colas ni WebSockets.
-- No ampliar el producto hacia SaaS o múltiples Yapes.
+- No ampliar el producto hacia múltiples Yapes por Company.
 - No eliminar historial ni componentes legados sin revisar su uso.
 - No permitir que el flujo antiguo y el nuevo consuman el mismo pago.
 - No modificar archivos, desplegar ni ejecutar migraciones cuando

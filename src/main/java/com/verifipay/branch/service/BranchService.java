@@ -8,7 +8,8 @@ import com.verifipay.branch.repository.BranchRepository;
 import com.verifipay.common.exception.BusinessException;
 import com.verifipay.common.exception.ResourceNotFoundException;
 import com.verifipay.company.entity.Company;
-import com.verifipay.company.repository.CompanyRepository;
+import com.verifipay.security.CurrentUserService;
+import com.verifipay.common.enums.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,19 +22,14 @@ import java.util.List;
 public class BranchService {
 
     private final BranchRepository branchRepository;
-    private final CompanyRepository companyRepository;
+    private final CurrentUserService currentUserService;
     private final BranchMapper branchMapper;
 
     @Transactional
     public BranchResponse create(CreateBranchRequest request) {
 
-        Company company = companyRepository
-                .findById(request.companyId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Empresa no encontrada"
-                        )
-                );
+        var owner = currentUserService.requireRole(UserRole.OWNER);
+        Company company = owner.getCompany();
 
         boolean exists =
                 branchRepository
@@ -60,9 +56,11 @@ public class BranchService {
     @Transactional(readOnly = true)
     public BranchResponse findById(Long id) {
 
+        var owner = currentUserService.requireRole(UserRole.OWNER);
+
         Branch branch = branchRepository
                 .findById(id)
-                .orElseThrow(() ->
+                .filter(value -> value.getCompany().getId().equals(owner.getCompany().getId())).orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "Local no encontrado"
                         )
@@ -72,16 +70,11 @@ public class BranchService {
     }
 
     @Transactional(readOnly = true)
-    public List<BranchResponse> findAllByCompany(Long companyId) {
-
-        if (!companyRepository.existsById(companyId)) {
-            throw new ResourceNotFoundException(
-                    "Empresa no encontrada"
-            );
-        }
+    public List<BranchResponse> findAll() {
+        var owner = currentUserService.requireRole(UserRole.OWNER);
 
         return branchRepository
-                .findAllByCompanyId(companyId)
+                .findAllByCompanyId(owner.getCompany().getId())
                 .stream()
                 .map(branchMapper::toResponse)
                 .toList();
@@ -93,8 +86,10 @@ public class BranchService {
             UpdateBranchRequest request
     ) {
 
+        var owner = currentUserService.requireRole(UserRole.OWNER);
         Branch branch = branchRepository
                 .findById(id)
+                .filter(value -> value.getCompany().getId().equals(owner.getCompany().getId()))
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "Local no encontrado"
@@ -135,8 +130,10 @@ public class BranchService {
             boolean active
     ) {
 
+        var owner = currentUserService.requireRole(UserRole.OWNER);
         Branch branch = branchRepository
                 .findById(id)
+                .filter(value -> value.getCompany().getId().equals(owner.getCompany().getId()))
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "Local no encontrado"

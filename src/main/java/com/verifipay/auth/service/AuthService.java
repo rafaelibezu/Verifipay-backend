@@ -60,10 +60,8 @@ public class AuthService {
         String accessToken =
                 jwtService.generateAccessToken(user);
 
-        Long branchId =
-                user.getBranch() != null
-                        ? user.getBranch().getId()
-                        : null;
+        Long companyId = user.getCompany() == null ? null : user.getCompany().getId();
+        Long branchId = user.getBranch() == null ? null : user.getBranch().getId();
 
         AuthUserResponse userResponse =
                 new AuthUserResponse(
@@ -71,7 +69,7 @@ public class AuthService {
                         user.getName(),
                         user.getEmail(),
                         user.getRole(),
-                        user.getCompany().getId(),
+                        companyId,
                         branchId
                 );
 
@@ -103,8 +101,8 @@ public class AuthService {
                 user.getEmail(),
                 user.getRole(),
 
-                user.getCompany().getId(),
-                user.getCompany().getName(),
+                user.getCompany() == null ? null : user.getCompany().getId(),
+                user.getCompany() == null ? null : user.getCompany().getName(),
 
                 branchId,
                 branchName

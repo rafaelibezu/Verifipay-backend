@@ -5,6 +5,7 @@ import com.verifipay.common.enums.PaymentMethod;
 import com.verifipay.common.enums.VerificationStatus;
 import com.verifipay.security.CurrentUserService;
 import com.verifipay.user.entity.User;
+import com.verifipay.common.enums.UserRole;
 import com.verifipay.verification.dto.VerificationResponse;
 import com.verifipay.verification.entity.Verification;
 import com.verifipay.verification.mapper.VerificationMapper;
@@ -42,8 +43,7 @@ public class AdminVerificationService {
             int size
     ) {
 
-        User admin =
-                currentUserService.getCurrentUser();
+        User admin = currentUserService.requireRole(UserRole.OWNER);
 
         Long companyId =
                 admin.getCompany().getId();

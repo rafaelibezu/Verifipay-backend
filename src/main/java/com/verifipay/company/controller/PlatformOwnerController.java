@@ -1,0 +1,3 @@
+package com.verifipay.company.controller;
+import com.verifipay.common.api.ApiResponse; import com.verifipay.user.dto.*; import com.verifipay.user.service.PlatformOwnerService; import jakarta.validation.Valid; import lombok.RequiredArgsConstructor; import org.springframework.http.*; import org.springframework.web.bind.annotation.*;
+@RestController @RequestMapping("/api/v1/platform/companies/{companyId}/owner") @RequiredArgsConstructor public class PlatformOwnerController {private final PlatformOwnerService service; @PostMapping public ResponseEntity<ApiResponse<UserResponse>> create(@PathVariable Long companyId,@Valid @RequestBody CreateOwnerRequest request){return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(service.create(companyId,request)));}}

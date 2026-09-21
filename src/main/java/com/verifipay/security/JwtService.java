@@ -39,14 +39,13 @@ public class JwtService {
                         .subject(user.getEmail())
                         .claim("userId", user.getId())
                         .claim(
-                                "companyId",
-                                user.getCompany().getId()
-                        )
-                        .claim(
                                 "role",
                                 user.getRole().name()
                         );
 
+        if (user.getCompany() != null) {
+            claimsBuilder.claim("companyId", user.getCompany().getId());
+        }
         if (user.getBranch() != null) {
             claimsBuilder.claim(
                     "branchId",
