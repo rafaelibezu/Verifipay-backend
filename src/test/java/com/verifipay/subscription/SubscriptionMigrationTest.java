@@ -35,7 +35,7 @@ class SubscriptionMigrationTest {
                 Map<String,List<Map<String,Object>>> before = new HashMap<>();
                 for (String table : List.of("companies","branches","users","payment_events","payment_requests","verifications","receiver_devices","audit_logs","payment_match_candidates"))
                     before.put(table,jdbc.queryForList("SELECT * FROM "+table+" ORDER BY id"));
-                assertEquals(1,Flyway.configure().dataSource(dataSource).schemas(schema).defaultSchema(schema).load().migrate().migrationsExecuted);
+                assertEquals(1,Flyway.configure().dataSource(dataSource).schemas(schema).defaultSchema(schema).target("12").load().migrate().migrationsExecuted);
                 before.forEach((table, rows) -> assertEquals(rows,jdbc.queryForList("SELECT * FROM "+table+" ORDER BY id")));
                 assertEquals(0L,jdbc.queryForObject("SELECT count(*) FROM subscriptions",Long.class));
                 assertEquals(0L,jdbc.queryForObject("SELECT count(*) FROM information_schema.columns WHERE table_schema=? AND table_name='companies' AND column_name='subscription_id'",Long.class,schema));

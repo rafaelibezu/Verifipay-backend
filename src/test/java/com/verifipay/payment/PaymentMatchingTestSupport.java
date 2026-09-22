@@ -42,6 +42,7 @@ public abstract class PaymentMatchingTestSupport {
         branchId = jdbc.queryForObject("INSERT INTO branches(company_id, name) VALUES (?, 'Central') RETURNING id",
                 Long.class, companyId);
         cashierId = newCashier(branchId);
+        jdbc.update("INSERT INTO subscriptions(company_id,plan_id,status,contracted_price,currency,billing_interval,started_at) SELECT ?,id,'ACTIVE',price,currency,billing_interval,CURRENT_TIMESTAMP FROM plans WHERE code='BASIC'", companyId);
         token = UUID.randomUUID().toString();
         deviceId = jdbc.queryForObject("""
                 INSERT INTO receiver_devices(company_id, branch_id, name, token_hash)

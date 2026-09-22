@@ -30,7 +30,9 @@ class ApiConfigIntegrationTest {
         assertPaths("public", "/auth/login");
         assertPaths("platform-admin", "/platform/companies", "/platform/companies/{id}", "/platform/companies/{companyId}/owner", "/auth/me",
                 "/platform/plans", "/platform/plans/{id}", "/platform/companies/{companyId}/subscriptions",
-                "/platform/companies/{companyId}/subscriptions/current");
+                "/platform/companies/{companyId}/subscriptions/current", "/platform/companies/{companyId}/subscriptions/{subscriptionId}/activate",
+                "/platform/companies/{companyId}/subscriptions/{subscriptionId}/mark-past-due", "/platform/companies/{companyId}/subscriptions/{subscriptionId}/cancel",
+                "/platform/companies/{companyId}/subscriptions/{subscriptionId}/expire");
         assertPaths("owner", "/owner/company", "/owner/branches", "/owner/branches/{id}",
                 "/owner/branches/{id}/status", "/owner/cashiers", "/owner/cashiers/{id}",
                 "/owner/cashiers/{id}/status", "/owner/receiver-devices", "/owner/receiver-devices/{id}/status", "/owner/dashboard",

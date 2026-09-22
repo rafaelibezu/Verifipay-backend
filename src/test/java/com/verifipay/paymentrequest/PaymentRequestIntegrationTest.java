@@ -54,6 +54,7 @@ class PaymentRequestIntegrationTest {
         branchId = jdbc.queryForObject("INSERT INTO branches(company_id, name) VALUES (?, 'Test branch') RETURNING id", Long.class, companyId);
         cashierId = newCashier(companyId, branchId);
         otherCashierId = newCashier(companyId, branchId);
+        jdbc.update("INSERT INTO subscriptions(company_id,plan_id,status,contracted_price,currency,billing_interval,started_at) SELECT ?,id,'ACTIVE',price,currency,billing_interval,CURRENT_TIMESTAMP FROM plans WHERE code='BASIC'", companyId);
     }
 
     Long newCashier(Long company, Long branch) {

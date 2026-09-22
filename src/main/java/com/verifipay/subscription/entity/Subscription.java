@@ -53,6 +53,15 @@ public class Subscription {
         this.currency = plan.getCurrency();
         this.billingInterval = plan.getBillingInterval();
     }
+    public void activate(Instant now) {
+        status = SubscriptionStatus.ACTIVE;
+        if (startedAt == null) startedAt = now;
+        endedAt = null;
+        cancelledAt = null;
+    }
+    public void markPastDue() { status = SubscriptionStatus.PAST_DUE; }
+    public void cancel(Instant now) { status = SubscriptionStatus.CANCELLED; cancelledAt = now; endedAt = now; }
+    public void expire(Instant now) { status = SubscriptionStatus.EXPIRED; endedAt = now; cancelledAt = null; }
     @PrePersist void onCreate() { createdAt = updatedAt = Instant.now(); }
     @PreUpdate void onUpdate() { updatedAt = Instant.now(); }
 }

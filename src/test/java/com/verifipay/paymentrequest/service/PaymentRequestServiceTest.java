@@ -7,6 +7,7 @@ import com.verifipay.paymentrequest.dto.CreatePaymentRequestRequest;
 import com.verifipay.paymentrequest.repository.PaymentRequestRepository;
 import com.verifipay.security.CurrentUserService;
 import com.verifipay.user.entity.User;
+import com.verifipay.subscription.service.SubscriptionAccessService;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -31,7 +32,7 @@ class PaymentRequestServiceTest {
         when(currentUser.requireRole(UserRole.CASHIER)).thenReturn(cashier);
         when(repository.findByCashierIdAndClientRequestId(2L, "retry")).thenReturn(Optional.empty());
         var now = Instant.parse("2026-09-20T23:59:59Z");
-        var service = new PaymentRequestService(repository, currentUser, companies, 7, Clock.fixed(now, ZoneOffset.UTC));
+        var service = new PaymentRequestService(repository, currentUser, companies, mock(SubscriptionAccessService.class), 7, Clock.fixed(now, ZoneOffset.UTC));
         // Stop after the insert; inspect the timestamps passed to persistence.
         assertThrows(IllegalStateException.class,
                 () -> service.create(new CreatePaymentRequestRequest(new BigDecimal("80.00"), "retry")));
@@ -42,7 +43,7 @@ class PaymentRequestServiceTest {
     void rejectsNonPositiveExpirationConfiguration() {
         for (long minutes : new long[]{0, -1}) {
             assertThrows(IllegalArgumentException.class, () -> new PaymentRequestService(
-                    mock(PaymentRequestRepository.class), mock(CurrentUserService.class), mock(CompanyRepository.class), minutes));
+                    mock(PaymentRequestRepository.class), mock(CurrentUserService.class), mock(CompanyRepository.class), mock(SubscriptionAccessService.class), minutes));
         }
     }
 }

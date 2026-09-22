@@ -10,6 +10,7 @@ import com.verifipay.paymentrequest.dto.PaymentRequestResponse;
 import com.verifipay.paymentrequest.repository.PaymentRequestRepository;
 import com.verifipay.security.CurrentUserService;
 import com.verifipay.user.entity.User;
+import com.verifipay.subscription.service.SubscriptionAccessService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,18 +33,19 @@ public class PaymentRequestService {
     private final PaymentRequestRepository repository;
     private final CurrentUserService currentUserService;
     private final CompanyRepository companyRepository;
+    private final SubscriptionAccessService subscriptionAccess;
     private final Duration expiration;
     private final Clock clock;
 
     @Autowired
     public PaymentRequestService(PaymentRequestRepository repository, CurrentUserService currentUserService,
-            CompanyRepository companyRepository,
+            CompanyRepository companyRepository, SubscriptionAccessService subscriptionAccess,
             @Value("${payment-request.expiration-minutes:5}") long expirationMinutes) {
-        this(repository, currentUserService, companyRepository, expirationMinutes, Clock.systemUTC());
+        this(repository, currentUserService, companyRepository, subscriptionAccess, expirationMinutes, Clock.systemUTC());
     }
 
     PaymentRequestService(PaymentRequestRepository repository, CurrentUserService currentUserService,
-            CompanyRepository companyRepository,
+            CompanyRepository companyRepository, SubscriptionAccessService subscriptionAccess,
             long expirationMinutes, Clock clock) {
         if (expirationMinutes <= 0) {
             throw new IllegalArgumentException("payment-request.expiration-minutes debe ser positivo");
@@ -51,6 +53,7 @@ public class PaymentRequestService {
         this.repository = repository;
         this.currentUserService = currentUserService;
         this.companyRepository = companyRepository;
+        this.subscriptionAccess = subscriptionAccess;
         this.expiration = Duration.ofMinutes(expirationMinutes);
         this.clock = clock;
     }
@@ -61,6 +64,7 @@ public class PaymentRequestService {
     public CreationResult create(@Valid CreatePaymentRequestRequest input) {
         User cashier = requireActiveCashier();
         lockCompany(cashier);
+        subscriptionAccess.requireOperationalAccess(cashier.getCompany().getId());
         Instant now = clock.instant();
         int inserted = repository.insertIfAbsent(cashier.getCompany().getId(),
                 cashier.getBranch() == null ? null : cashier.getBranch().getId(), cashier.getId(),

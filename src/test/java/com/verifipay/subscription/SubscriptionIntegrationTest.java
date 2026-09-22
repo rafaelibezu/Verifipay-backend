@@ -105,6 +105,81 @@ class SubscriptionIntegrationTest {
         assertTrue(subscriptions.history(company).isEmpty());
     }
 
+    @Test void lifecycleTransitionsAreExplicitIdempotentAndTerminalSubscriptionsCanBeReplaced() {
+        var pending = subscriptions.create(company, new CreateSubscriptionRequest(plan));
+        assertNull(pending.startedAt());
+        var active = subscriptions.activate(company, pending.id());
+        assertEquals(SubscriptionStatus.ACTIVE, active.status());
+        assertNotNull(active.startedAt());
+        var persistedStartedAt = subscriptions.current(company).startedAt();
+        assertEquals(persistedStartedAt, subscriptions.activate(company, pending.id()).startedAt());
+        assertEquals(SubscriptionStatus.PAST_DUE, subscriptions.markPastDue(company, pending.id()).status());
+        assertEquals(persistedStartedAt, subscriptions.activate(company, pending.id()).startedAt());
+        var cancelled = subscriptions.cancel(company, pending.id());
+        assertEquals(SubscriptionStatus.CANCELLED, cancelled.status());
+        assertNotNull(cancelled.cancelledAt());
+        assertNotNull(cancelled.endedAt());
+        assertThrows(BusinessException.class, () -> subscriptions.activate(company, pending.id()));
+        assertThrows(com.verifipay.common.exception.ResourceNotFoundException.class, () -> subscriptions.current(company));
+        assertNotNull(subscriptions.create(company, new CreateSubscriptionRequest(plan)).id());
+    }
+
+    @Test void expirationAndTenantIsolationFollowLifecycleRules() {
+        var active = subscriptions.activate(company, subscriptions.create(company, new CreateSubscriptionRequest(plan)).id());
+        var expired = subscriptions.expire(company, active.id());
+        assertEquals(SubscriptionStatus.EXPIRED, expired.status());
+        assertNotNull(expired.startedAt());
+        assertNotNull(expired.endedAt());
+        assertNull(expired.cancelledAt());
+        assertThrows(BusinessException.class, () -> subscriptions.activate(company, active.id()));
+        Long other = newCompany();
+        assertThrows(com.verifipay.common.exception.ResourceNotFoundException.class,
+                () -> subscriptions.cancel(other, active.id()));
+    }
+
+    @Test void v13EnforcesStatusDateCombinations() {
+        var pending = subscriptions.create(company, new CreateSubscriptionRequest(plan));
+        assertThrows(org.springframework.dao.DataIntegrityViolationException.class,
+                () -> jdbc.update("UPDATE subscriptions SET started_at = CURRENT_TIMESTAMP WHERE id = ?", pending.id()));
+        var active = subscriptions.activate(company, pending.id());
+        assertThrows(org.springframework.dao.DataIntegrityViolationException.class,
+                () -> jdbc.update("UPDATE subscriptions SET ended_at = CURRENT_TIMESTAMP WHERE id = ?", active.id()));
+        var cancelled = subscriptions.cancel(company, pending.id());
+        assertNotNull(cancelled.endedAt());
+        assertNotNull(cancelled.cancelledAt());
+    }
+
+    @Test void concurrentTerminalTransitionsLeaveOneConsistentTerminalState() throws Exception {
+        var active = subscriptions.activate(company, subscriptions.create(company, new CreateSubscriptionRequest(plan)).id());
+        var start = new CountDownLatch(1);
+        try (var executor = Executors.newFixedThreadPool(2)) {
+            Callable<Boolean> cancel = () -> lifecycleAttempt(start, () -> subscriptions.cancel(company, active.id()));
+            Callable<Boolean> expire = () -> lifecycleAttempt(start, () -> subscriptions.expire(company, active.id()));
+            var first = executor.submit(cancel);
+            var second = executor.submit(expire);
+            start.countDown();
+            assertNotEquals(first.get(20, TimeUnit.SECONDS), second.get(20, TimeUnit.SECONDS));
+        }
+        var terminal = subscriptions.history(company).stream().filter(value -> value.id().equals(active.id())).findFirst().orElseThrow();
+        assertTrue(terminal.status() == SubscriptionStatus.CANCELLED || terminal.status() == SubscriptionStatus.EXPIRED);
+        assertNotNull(terminal.endedAt());
+        if (terminal.status() == SubscriptionStatus.CANCELLED) assertNotNull(terminal.cancelledAt());
+        else assertNull(terminal.cancelledAt());
+    }
+
+    private boolean lifecycleAttempt(CountDownLatch start, Callable<?> operation) throws Exception {
+        authenticate();
+        try {
+            assertTrue(start.await(10, TimeUnit.SECONDS));
+            operation.call();
+            return true;
+        } catch (BusinessException expected) {
+            return false;
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+    }
+
     @Test void platformRoutesEnforceRolesAndRejectContractOverrides() throws Exception {
         String path = "/api/v1/platform/companies/"+company+"/subscriptions";
         for (String role : List.of("OWNER","CASHIER")) {

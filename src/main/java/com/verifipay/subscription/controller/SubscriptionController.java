@@ -26,4 +26,8 @@ public class SubscriptionController {
     public ApiResponse<SubscriptionResponse> current(@PathVariable Long companyId) {
         return ApiResponse.success(subscriptions.current(companyId));
     }
+    @PostMapping("/{subscriptionId}/activate") public ApiResponse<SubscriptionResponse> activate(@PathVariable Long companyId, @PathVariable Long subscriptionId) { return ApiResponse.success(subscriptions.activate(companyId, subscriptionId)); }
+    @PostMapping("/{subscriptionId}/mark-past-due") public ApiResponse<SubscriptionResponse> pastDue(@PathVariable Long companyId, @PathVariable Long subscriptionId) { return ApiResponse.success(subscriptions.markPastDue(companyId, subscriptionId)); }
+    @PostMapping("/{subscriptionId}/cancel") public ApiResponse<SubscriptionResponse> cancel(@PathVariable Long companyId, @PathVariable Long subscriptionId) { return ApiResponse.success(subscriptions.cancel(companyId, subscriptionId)); }
+    @PostMapping("/{subscriptionId}/expire") public ApiResponse<SubscriptionResponse> expire(@PathVariable Long companyId, @PathVariable Long subscriptionId) { return ApiResponse.success(subscriptions.expire(companyId, subscriptionId)); }
 }

@@ -76,7 +76,7 @@ class PlanQuotaIntegrationTest {
     }
 
     @Test
-    void deviceQuotaUsesCurrentSubscriptionEvenWhenPlanIsInactive() {
+    void deviceQuotaUsesActiveCurrentSubscriptionEvenWhenPlanIsInactive() {
         Tenant tenant = tenantWithCurrentSubscription(1, 1, false);
         authenticate(tenant.ownerId());
 
@@ -91,6 +91,18 @@ class PlanQuotaIntegrationTest {
     @Test
     void quotaServiceRequiresTheCallersTransaction() {
         assertThrows(IllegalTransactionStateException.class, () -> quotas.assertCanActivateCashier(1L));
+    }
+
+    @Test
+    void pendingPaymentBlocksOperationalResourceCreation() {
+        Tenant tenant = tenantWithoutSubscription();
+        Long plan = jdbc.queryForObject("SELECT id FROM plans WHERE code = 'BASIC'", Long.class);
+        jdbc.update("INSERT INTO subscriptions(company_id,plan_id,status,contracted_price,currency,billing_interval) VALUES (?,?,'PENDING_PAYMENT',40,'PEN','MONTHLY')", tenant.companyId(), plan);
+        authenticate(tenant.ownerId());
+        assertEquals("La Subscription de la empresa está pendiente de pago", assertThrows(BusinessException.class,
+                () -> cashiers.create(cashierRequest(tenant.branchId()))).getMessage());
+        assertEquals("La Subscription de la empresa está pendiente de pago", assertThrows(BusinessException.class,
+                () -> devices.create(deviceRequest(tenant.branchId()))).getMessage());
     }
 
     @Test
@@ -186,7 +198,7 @@ class PlanQuotaIntegrationTest {
         Tenant tenant = tenantWithoutSubscription();
         Long plan = jdbc.queryForObject("INSERT INTO plans(code,name,price,currency,billing_interval,max_cashiers,max_receiver_devices,active) VALUES (?,?,40,'PEN','MONTHLY',?,?,?) RETURNING id",
                 Long.class, "QUOTA_" + UUID.randomUUID().toString().replace("-", "").substring(0, 20), "Quota", maxCashiers, maxDevices, planActive);
-        jdbc.update("INSERT INTO subscriptions(company_id,plan_id,status,contracted_price,currency,billing_interval) VALUES (?,?,'PENDING_PAYMENT',40,'PEN','MONTHLY')",
+        jdbc.update("INSERT INTO subscriptions(company_id,plan_id,status,contracted_price,currency,billing_interval,started_at) VALUES (?,?,'ACTIVE',40,'PEN','MONTHLY',CURRENT_TIMESTAMP)",
                 tenant.companyId(), plan);
         return tenant;
     }
