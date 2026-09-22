@@ -19,10 +19,14 @@ spring:
 security:
   jwt:
     secret: ${JWT_SECRET:verifipay-local-secret-key-2026-change-in-production}
-    expiration-minutes: 30
+    expiration-minutes: ${JWT_EXPIRATION_MINUTES:480}
 
 payment-request:
   expiration-minutes: ${PAYMENT_REQUEST_EXPIRATION_MINUTES:5}
+
+billing:
+  manual:
+    enabled: ${BILLING_MANUAL_ENABLED:false}
 
 server:
   port: 8080

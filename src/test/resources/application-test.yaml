@@ -14,3 +14,6 @@ security:
     secret: verifipay-test-only-key-not-for-production-0123456789
 payment-request:
   expiration-minutes: 5
+billing:
+  manual:
+    enabled: true
