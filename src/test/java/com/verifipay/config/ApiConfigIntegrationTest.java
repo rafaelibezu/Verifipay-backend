@@ -33,7 +33,7 @@ class ApiConfigIntegrationTest {
                 "/platform/companies/{companyId}/subscriptions/current");
         assertPaths("owner", "/owner/company", "/owner/branches", "/owner/branches/{id}",
                 "/owner/branches/{id}/status", "/owner/cashiers", "/owner/cashiers/{id}",
-                "/owner/cashiers/{id}/status", "/owner/receiver-devices", "/owner/dashboard",
+                "/owner/cashiers/{id}/status", "/owner/receiver-devices", "/owner/receiver-devices/{id}/status", "/owner/dashboard",
                 "/owner/audit-logs", "/owner/verifications", "/auth/me");
         assertPaths("cashier", "/payment-requests", "/payment-requests/{id}", "/payment-requests/{id}/cancel",
                 "/auth/me", "/verifications", "/verifications/{id}");

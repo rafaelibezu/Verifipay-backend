@@ -37,4 +37,10 @@ public class ReceiverDeviceAdminController {
                 )
         );
     }
+
+    @PatchMapping("/{id}/status")
+    public ApiResponse<Void> deactivate(@PathVariable Long id) {
+        receiverDeviceService.deactivate(id);
+        return ApiResponse.success("Dispositivo receptor desactivado correctamente", null);
+    }
 }

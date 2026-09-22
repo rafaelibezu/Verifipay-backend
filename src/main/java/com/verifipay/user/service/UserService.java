@@ -17,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.verifipay.user.dto.UpdateUserRequest;
+import com.verifipay.subscription.service.PlanQuotaService;
 
 import java.util.List;
 
@@ -29,23 +30,25 @@ public class UserService {
     private final BranchRepository branchRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final PlanQuotaService quotas;
 
     @Transactional
     public UserResponse create(CreateUserRequest request) {
+
+        Company company;
+        if (request.role() == UserRole.CASHIER) {
+            company = quotas.assertCanActivateCashier(request.companyId());
+        } else {
+            company = companyRepository
+                    .findById(request.companyId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Empresa no encontrada"));
+        }
 
         if (userRepository.existsByEmailIgnoreCase(request.email())) {
             throw new BusinessException(
                     "Ya existe un usuario registrado con este correo"
             );
         }
-
-        Company company = companyRepository
-                .findById(request.companyId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Empresa no encontrada"
-                        )
-                );
 
         Branch branch = resolveBranch(request, company);
 
@@ -160,6 +163,12 @@ public class UserService {
                         )
                 );
 
+        if (request.role() == UserRole.CASHIER
+                && user.getRole() != UserRole.CASHIER
+                && Boolean.TRUE.equals(user.getActive())) {
+            quotas.assertCanActivateCashier(user.getCompany().getId());
+        }
+
         String normalizedEmail =
                 request.email().trim().toLowerCase();
 
@@ -220,6 +229,10 @@ public class UserService {
                                 "Usuario no encontrado"
                         )
                 );
+
+        if (active && user.getRole() == UserRole.CASHIER && !Boolean.TRUE.equals(user.getActive())) {
+            quotas.assertCanActivateCashier(user.getCompany().getId());
+        }
 
         user.setActive(active);
 
