@@ -1,0 +1,10 @@
+target
+.git
+.idea
+.vscode
+.env
+logs
+*.log
+tmp
+*.tmp
+*.swp

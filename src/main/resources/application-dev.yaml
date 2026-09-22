@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/verifipay_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:}
+security:
+  jwt:
+    secret: ${JWT_SECRET:verifipay-local-secret-key-2026-change-in-production}
+platform:
+  bootstrap:
+    enabled: ${PLATFORM_BOOTSTRAP_ENABLED:false}
+billing:
+  manual:
+    enabled: ${BILLING_MANUAL_ENABLED:false}
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
