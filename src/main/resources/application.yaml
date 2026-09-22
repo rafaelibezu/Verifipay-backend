@@ -20,6 +20,7 @@ security:
   jwt:
     secret: ${JWT_SECRET:verifipay-local-secret-key-2026-change-in-production}
     expiration-minutes: ${JWT_EXPIRATION_MINUTES:480}
+    refresh-expiration-days: ${JWT_REFRESH_EXPIRATION_DAYS:30}
 
 payment-request:
   expiration-minutes: ${PAYMENT_REQUEST_EXPIRATION_MINUTES:5}

@@ -24,11 +24,13 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokens;
     private final CurrentUserService currentUserService;
 
     @Value("${security.jwt.expiration-minutes}")
     private long expirationMinutes;
 
+    @Transactional
     public LoginResponse login(LoginRequest request) {
 
         try {
@@ -74,11 +76,28 @@ public class AuthService {
                 );
 
         return new LoginResponse(
-                accessToken,
+                accessToken, refreshTokens.issue(user).value(),
                 "Bearer",
                 expirationMinutes * 60,
                 userResponse
         );
+    }
+
+    @Transactional
+    public LoginResponse refresh(String refreshToken) {
+        var issued = refreshTokens.rotate(refreshToken);
+        User user = issued.token().getUser();
+        return response(jwtService.generateAccessToken(user), issued.value(), user);
+    }
+
+    @Transactional
+    public void logout(String refreshToken) { refreshTokens.logout(refreshToken); }
+
+    private LoginResponse response(String accessToken, String refreshToken, User user) {
+        Long companyId = user.getCompany() == null ? null : user.getCompany().getId();
+        Long branchId = user.getBranch() == null ? null : user.getBranch().getId();
+        return new LoginResponse(accessToken, refreshToken, "Bearer", expirationMinutes * 60,
+                new AuthUserResponse(user.getId(), user.getName(), user.getEmail(), user.getRole(), companyId, branchId));
     }
 
     @Transactional(readOnly = true)

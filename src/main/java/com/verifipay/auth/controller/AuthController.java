@@ -3,6 +3,7 @@ package com.verifipay.auth.controller;
 import com.verifipay.auth.dto.CurrentUserResponse;
 import com.verifipay.auth.dto.LoginRequest;
 import com.verifipay.auth.dto.LoginResponse;
+import com.verifipay.auth.dto.RefreshRequest;
 import com.verifipay.auth.service.AuthService;
 import com.verifipay.common.api.ApiResponse;
 import jakarta.validation.Valid;
@@ -28,6 +29,17 @@ public class AuthController {
                         authService.login(request)
                 )
         );
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<LoginResponse>> refresh(@Valid @RequestBody RefreshRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(authService.refresh(request.refreshToken())));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(@Valid @RequestBody RefreshRequest request) {
+        authService.logout(request.refreshToken());
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @GetMapping("/me")

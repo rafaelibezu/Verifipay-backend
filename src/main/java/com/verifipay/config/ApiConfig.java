@@ -35,7 +35,7 @@ public class ApiConfig {
     @Bean
     public GroupedOpenApi publicApi() {
         return group("public", "Public / Auth", "Inicio de sesion sin autenticacion previa.",
-                "/api/v1/auth/login");
+                "/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/logout");
     }
 
     @Bean
@@ -83,7 +83,7 @@ public class ApiConfig {
     @Bean
     public GlobalOpenApiCustomizer operationSecurity() {
         return api -> api.getPaths().forEach((path, item) -> item.readOperations().forEach(operation -> {
-            if (path.equals("/api/v1/auth/login")) {
+            if (path.equals("/api/v1/auth/login") || path.equals("/api/v1/auth/refresh") || path.equals("/api/v1/auth/logout")) {
                 operation.setSecurity(List.of());
             } else if (path.equals("/api/v1/device/payment-events/yape")) {
                 operation.setSecurity(List.of(new SecurityRequirement().addList(DEVICE)));

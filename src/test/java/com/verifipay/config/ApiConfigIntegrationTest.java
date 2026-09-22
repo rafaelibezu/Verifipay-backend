@@ -27,7 +27,7 @@ class ApiConfigIntegrationTest {
 
     @Test
     void groupsContainOnlyTheDocumentedActorPaths() throws Exception {
-        assertPaths("public", "/auth/login");
+        assertPaths("public", "/auth/login", "/auth/refresh", "/auth/logout");
         assertPaths("platform-admin", "/platform/companies", "/platform/companies/{id}", "/platform/companies/{companyId}/owner", "/auth/me",
                 "/platform/plans", "/platform/plans/{id}", "/platform/companies/{companyId}/subscriptions",
                 "/platform/companies/{companyId}/subscriptions/current", "/platform/companies/{companyId}/subscriptions/{subscriptionId}/activate",
