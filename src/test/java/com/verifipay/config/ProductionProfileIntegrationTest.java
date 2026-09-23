@@ -9,8 +9,15 @@ import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.security.test.context.support.WithMockUser;
 
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -25,6 +32,10 @@ import static org.junit.jupiter.api.Assertions.*;
 class ProductionProfileIntegrationTest {
     @Autowired Environment environment;
     @Autowired WebApplicationContext context;
+
+    private MockMvc mvc() {
+        return MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
+    }
 
     @Test void productionDefaultsAreSafeAndContextStarts() {
         assertEquals("false", environment.getProperty("springdoc.api-docs.enabled"));
@@ -48,5 +59,16 @@ class ProductionProfileIntegrationTest {
         assertEquals("false", environment.getProperty("springdoc.api-docs.enabled"));
         assertEquals("false", environment.getProperty("springdoc.swagger-ui.enabled"));
         assertFalse(context.containsBean("manualPaymentOrderController"));
+    }
+
+    @Test
+    @WithMockUser
+    void nonexistentResourcesReturnNotFoundInProduction() throws Exception {
+        for (String path : new String[]{"/resource-that-does-not-exist", "/swagger-ui/index.html", "/v3/api-docs"}) {
+            mvc().perform(get(path))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value("ERROR"))
+                    .andExpect(jsonPath("$.message").value("Recurso no encontrado"));
+        }
     }
 }
