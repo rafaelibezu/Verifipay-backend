@@ -14,6 +14,13 @@ services:
       retries: 5
       start_period: 10s
     restart: unless-stopped
+    cpus: 1.0
+    mem_limit: 2g
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - verifipay_internal
 
@@ -37,6 +44,7 @@ services:
       BILLING_MANUAL_ENABLED: "false"
       SPRINGDOC_API_DOCS_ENABLED: "false"
       SPRINGDOC_SWAGGER_UI_ENABLED: "false"
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=70.0}
     ports:
       - "8080:8080"
     healthcheck:
@@ -46,6 +54,14 @@ services:
       retries: 10
       start_period: 60s
     restart: unless-stopped
+    stop_grace_period: 30s
+    cpus: 1.5
+    mem_limit: 2g
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - verifipay_public
       - verifipay_internal

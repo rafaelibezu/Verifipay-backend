@@ -45,6 +45,8 @@ class ProductionProfileIntegrationTest {
         assertEquals("health", environment.getProperty("management.endpoints.web.exposure.include"));
         assertEquals("never", environment.getProperty("management.endpoint.health.show-details"));
         assertEquals("never", environment.getProperty("server.error.include-stacktrace"));
+        assertEquals("graceful", environment.getProperty("server.shutdown"));
+        assertEquals("25s", environment.getProperty("spring.lifecycle.timeout-per-shutdown-phase"));
         assertEquals(0, context.getBeansOfType(ManualPaymentOrderController.class).size());
     }
 

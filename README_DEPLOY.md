@@ -70,3 +70,93 @@ instalar `curl` o `wget` solo para esta comprobación.
 
 Para una futura VPS, PostgreSQL seguirá sin exponerse; un reverse proxy será el
 único componente público por los puertos 80/443.
+
+## Operación y recuperación
+
+El perfil `prod` usa cierre ordenado de Spring (`server.shutdown=graceful`) y
+espera hasta 25 segundos por cada fase de cierre. Docker da al backend 30
+segundos antes de forzar la detención; el `ENTRYPOINT` sigue en formato exec,
+por lo que Java recibe la señal de parada directamente.
+
+Los límites se definen con `cpus` y `mem_limit`, opciones aplicadas por Docker
+Compose fuera de Swarm: backend 1.5 CPU/2 GB y PostgreSQL 1 CPU/2 GB. Se deja
+margen en el VPS de 3 vCPU/8 GB para SO, Docker y el proxy futuro. Ambos
+servicios conservan stdout/stderr y rotan `json-file` a cinco archivos de 10 MB.
+
+Java detecta el límite del contenedor. `JAVA_TOOL_OPTIONS` configura un heap
+inicial de 25% y máximo de 70%; puede ajustarse en `.env`, manteniéndolo por
+debajo de los 2 GB del backend para reservar memoria no-heap.
+
+### Backup
+
+Desde la raíz del proyecto en Linux/Ubuntu:
+
+```sh
+sh ./scripts/backup-postgres.sh
+```
+
+El archivo custom de `pg_dump` queda en `./backups/` con timestamp UTC. Este
+directorio está ignorado por Git. Para revisar que el dump no esté vacío y
+listar su contenido:
+
+```sh
+ls -lh ./backups/
+docker compose exec -T postgres pg_restore --list < ./backups/ARCHIVO.dump
+```
+
+En Windows se puede ejecutar el equivalente con PowerShell 7:
+
+```powershell
+.\scripts\backup-postgres.ps1
+```
+
+### Restore
+
+La restauración es destructiva para los objetos existentes de la base destino:
+usa `pg_restore --clean --if-exists --no-owner`, no ejecuta `DROP DATABASE` y
+pide confirmación. Detenga el backend para evitar escrituras concurrentes:
+
+```sh
+docker compose stop backend
+sh ./scripts/restore-postgres.sh ./backups/ARCHIVO.dump
+docker compose start backend
+curl http://localhost:8080/actuator/health
+docker compose exec -T postgres sh -ec \
+  'exec psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank;"'
+```
+
+Use `--yes` solo para automatización ya revisada. En PowerShell 7:
+
+```powershell
+.\scripts\restore-postgres.ps1 -BackupPath .\backups\ARCHIVO.dump
+```
+
+### Persistencia, recreación y logs
+
+`docker compose down` no borra la base: el volumen nombrado permanece. Nunca
+use `docker compose down -v` salvo que quiera eliminar explícitamente todos los
+datos. Para recrear contenedores conservando el volumen:
+
+```sh
+docker compose up -d --build
+docker compose logs --tail=100 backend
+docker compose logs -f backend
+```
+
+### Runbook corto
+
+Si el backend cae: (1) `docker compose ps`; (2) `docker compose logs --tail=100 backend`;
+(3) `docker compose restart backend`; (4) consulte `/actuator/health`.
+
+Si PostgreSQL cae: (1) revise `docker compose logs --tail=100 postgres`; (2) no
+borre el volumen; (3) `docker compose restart postgres`; (4) confirme el
+health; (5) reinicie el backend si no recupera la conexión.
+
+Si el volumen se pierde: cree el stack limpio con `docker compose up -d --build`,
+restaure el último backup, revise `flyway_schema_history`, confirme health y
+ejecute smoke tests básicos.
+
+Actuator expone solamente `/actuator/health` en producción y no revela detalles
+sensibles. Los grupos de liveness/readiness de Spring Boot no están habilitados
+ni visibles actualmente; no se añadieron endpoints ni probes nuevos en esta
+etapa.
