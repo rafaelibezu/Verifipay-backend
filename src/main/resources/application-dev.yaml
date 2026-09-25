@@ -9,6 +9,9 @@ security:
 platform:
   bootstrap:
     enabled: ${PLATFORM_BOOTSTRAP_ENABLED:false}
+    email: ${PLATFORM_BOOTSTRAP_EMAIL:}
+    name: ${PLATFORM_BOOTSTRAP_NAME:}
+    password: ${PLATFORM_BOOTSTRAP_PASSWORD:}
 billing:
   manual:
     enabled: ${BILLING_MANUAL_ENABLED:false}

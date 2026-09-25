@@ -48,6 +48,61 @@ Consultar health:
 http://localhost:8080/actuator/health
 ```
 
+## Bootstrap inicial de PLATFORM_ADMIN
+
+Use este procedimiento solo durante el primer despliegue de producción, cuando
+todavía no existe ningún `PLATFORM_ADMIN`. No hay endpoint HTTP de bootstrap ni
+credenciales por defecto.
+
+1. Configure temporalmente en el `.env` de producción:
+
+```env
+PLATFORM_BOOTSTRAP_ENABLED=true
+PLATFORM_BOOTSTRAP_EMAIL=
+PLATFORM_BOOTSTRAP_NAME=
+PLATFORM_BOOTSTRAP_PASSWORD=
+```
+
+Use un email real, un nombre operativo y una contraseña fuerte. No deje valores
+vacíos cuando `PLATFORM_BOOTSTRAP_ENABLED=true`.
+
+2. Arranque o recree el backend:
+
+```powershell
+docker compose up -d --build backend
+```
+
+3. Revise los logs del backend y confirme únicamente el mensaje de creación del
+`PLATFORM_ADMIN`. Los logs no deben imprimir la contraseña ni su hash:
+
+```powershell
+docker compose logs --tail=100 backend
+```
+
+4. Verifique login con el `PLATFORM_ADMIN` creado.
+
+5. Cambie inmediatamente el `.env` de producción:
+
+```env
+PLATFORM_BOOTSTRAP_ENABLED=false
+```
+
+6. Elimine `PLATFORM_BOOTSTRAP_PASSWORD` del `.env` de producción.
+
+7. Recree o reinicie el backend:
+
+```powershell
+docker compose up -d --build backend
+```
+
+Recrear el contenedor es importante para que `PLATFORM_BOOTSTRAP_PASSWORD`
+también desaparezca del environment del contenedor anterior.
+
+8. Confirme que el bootstrap ya no ejecuta.
+
+Advertencia: NO deje `PLATFORM_BOOTSTRAP_ENABLED=true` después del primer
+provisionamiento.
+
 Detener sin borrar datos:
 
 ```powershell

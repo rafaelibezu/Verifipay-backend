@@ -17,6 +17,8 @@ public interface UserRepository
 
     boolean existsByEmailIgnoreCase(String email);
 
+    long countByRole(UserRole role);
+
     List<User> findAllByCompanyId(Long companyId);
 
     List<User> findAllByBranchId(Long branchId);
