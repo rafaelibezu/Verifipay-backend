@@ -11,5 +11,7 @@ public interface ReceiverDeviceRepository
     Optional<ReceiverDevice>
     findByTokenHashAndActiveTrue(String tokenHash);
 
+    Optional<ReceiverDevice> findByCompanyIdAndActiveTrue(Long companyId);
+
     long countByCompanyIdAndActiveTrue(Long companyId);
 }

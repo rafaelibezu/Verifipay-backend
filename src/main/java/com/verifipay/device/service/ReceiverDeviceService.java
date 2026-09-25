@@ -5,6 +5,7 @@ import com.verifipay.branch.repository.BranchRepository;
 import com.verifipay.common.exception.BusinessException;
 import com.verifipay.common.exception.ResourceNotFoundException;
 import com.verifipay.device.dto.CreateReceiverDeviceRequest;
+import com.verifipay.device.dto.ReceiverDeviceCurrentResponse;
 import com.verifipay.device.dto.ReceiverDeviceCreatedResponse;
 import com.verifipay.device.entity.ReceiverDevice;
 import com.verifipay.device.repository.ReceiverDeviceRepository;
@@ -26,6 +27,20 @@ public class ReceiverDeviceService {
     private final CurrentUserService currentUserService;
     private final DeviceTokenUtil deviceTokenUtil;
     private final PlanQuotaService quotas;
+
+    @Transactional(readOnly = true)
+    public ReceiverDeviceCurrentResponse current() {
+        User owner = currentUserService.requireRole(UserRole.OWNER);
+        ReceiverDevice device = deviceRepository.findByCompanyIdAndActiveTrue(owner.getCompany().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Dispositivo receptor activo no encontrado"));
+        return new ReceiverDeviceCurrentResponse(
+                device.getId(),
+                device.getName(),
+                device.getBranch().getId(),
+                device.getBranch().getName(),
+                device.getLastSeenAt()
+        );
+    }
 
     @Transactional
     public ReceiverDeviceCreatedResponse create(

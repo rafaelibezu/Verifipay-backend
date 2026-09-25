@@ -2,6 +2,7 @@ package com.verifipay.device.controller;
 
 import com.verifipay.common.api.ApiResponse;
 import com.verifipay.device.dto.CreateReceiverDeviceRequest;
+import com.verifipay.device.dto.ReceiverDeviceCurrentResponse;
 import com.verifipay.device.dto.ReceiverDeviceCreatedResponse;
 import com.verifipay.device.service.ReceiverDeviceService;
 import jakarta.validation.Valid;
@@ -17,6 +18,14 @@ import org.springframework.web.bind.annotation.*;
 public class ReceiverDeviceAdminController {
 
     private final ReceiverDeviceService receiverDeviceService;
+
+        @GetMapping("/current")
+        public ApiResponse<ReceiverDeviceCurrentResponse> current() {
+                return ApiResponse.success(
+                                "Dispositivo receptor obtenido correctamente",
+                                receiverDeviceService.current()
+                );
+        }
 
     @PostMapping
     public ResponseEntity<
